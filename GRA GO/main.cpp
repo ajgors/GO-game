@@ -104,6 +104,8 @@ struct game_t {
 	}ko;
 
 	char char_under_stone[8] = { (char)UPPER_LEFT_CORNER_CHAR };
+
+	char scoring_board[10][10] = { 0 };
 };
 
 
@@ -186,6 +188,7 @@ void check_pressed_buttton(game_t* game_info) {
 		introduce_handicap(game_info);
 	}
 	else if (game_info->pressed_button == 'f') {
+		finish_game(game_info);
 		refresh_view(game_info, 0, 0);
 	}
 }
@@ -254,6 +257,9 @@ void unmark_board(game_t* game_info) {
 				game_info->board[y][x] = WHITE_PLAYER;
 			}
 			else if (game_info->board[y][x] == LIBERTY) {
+				game_info->board[y][x] = EMPTY;
+			}
+			else if (game_info->board[y][x] == MARKER) {
 				game_info->board[y][x] = EMPTY;
 			}
 		}
@@ -1025,4 +1031,112 @@ void show_manual() {
 	cputs("f: finish the game");
 	go_line_below(MANUAL_X);
 	cputs("h: introduce handicap");
+}
+
+
+void check(game_t* game_info, int x, int y) {
+	if (x < 0 || x >= game_info->board_size || y < 0 || y >= game_info->board_size) return;
+
+	if (game_info->board[y][x] == BLACK_PLAYER) {
+		game_info->scoring_board[y][x] = BLACK_PLAYER;
+		return;
+	}
+	else if (game_info->board[y][x] == WHITE_PLAYER) {
+		game_info->scoring_board[y][x] = WHITE_PLAYER;
+		return;
+	}
+
+	if (game_info->board[y][x] == 0) {
+		game_info->board[y][x] = MARKER;
+		check(game_info, x - 1, y);
+		check(game_info, x + 1, y);
+		check(game_info, x, y - 1);
+		check(game_info, x, y + 1);
+	}
+
+}
+
+
+void check_whites(game_t* game_info, int x, int y) {
+	if (x < 0 || x >= game_info->board_size || y < 0 || y >= game_info->board_size) return;
+
+	if (game_info->board[y][x] == WHITE_PLAYER) {
+		game_info->scoring_board[y][x] = WHITE_PLAYER;
+		return;
+	}
+
+	if (game_info->board[y][x] == 0 || game_info->board[y][x] == BLACK_PLAYER) {
+		game_info->board[y][x] = MARKER;
+		check(game_info, x - 1, y);
+		check(game_info, x + 1, y);
+		check(game_info, x, y - 1);
+		check(game_info, x, y + 1);
+	}
+
+}
+
+void finish_game(game_t* game_info) {
+	int flag_only_whites = 1;
+	int flag_only_blacks = 1;
+	int scoring_empty = 1;
+
+
+	int xd = 0;
+	for (int y = 0; y < game_info->board_size; y++) {
+		for (int x = 0; x < game_info->board_size; x++) {
+			game_info->scoring_board[y][x] = 0;
+		}
+	}
+
+	for (int y = 0; y < game_info->board_size; y++) {
+		for (int x = 0; x < game_info->board_size; x++) {
+			if (game_info->board[y][x] == 0) {
+				flag_only_whites = 1;
+				flag_only_blacks = 1;
+				check(game_info, x, y);
+				unmark_board(game_info);
+
+				for (int y = 0; y < game_info->board_size; y++) {
+					for (int x = 0; x < game_info->board_size; x++) {
+						if (game_info->scoring_board[y][x] == BLACK_PLAYER) {
+							flag_only_whites = 0;
+							xd = 1;
+						}
+					}
+				}
+
+				for (int y = 0; y < game_info->board_size; y++) {
+					for (int x = 0; x < game_info->board_size; x++) {
+						if (game_info->scoring_board[y][x] == WHITE_PLAYER) {
+							flag_only_blacks = 0;
+						}
+					}
+				}
+				if (flag_only_blacks == 1) game_info->score.black_player += 1;
+				else if (flag_only_whites == 1) game_info->score.white_player += 1;
+
+				for (int y = 0; y < game_info->board_size; y++) {
+					for (int x = 0; x < game_info->board_size; x++) {
+						game_info->scoring_board[y][x] = 0;
+					}
+				}
+			}
+			if (game_info->board[y][x] == BLACK_PLAYER) {
+				flag_only_whites = 1;
+				flag_only_blacks = 1;
+				check(game_info, x, y);
+				unmark_board(game_info);
+			}
+		}
+	}
+
+	if (game_info->handicap_mode_used == TRUE) {
+		game_info->score.white_player += 0.5;
+	}
+	else {
+		game_info->score.white_player += 6.5;
+	}
+
+	refresh_view(game_info, 0, 0);
+
 }
