@@ -13,16 +13,13 @@
 #define BOARD_X 70
 #define BOARD_Y 6
 #define LEGEND_X 10
-#define LEGEND_Y 19
+#define LEGEND_Y 5
 #define STATS_X 10
-#define STATS_Y 16
+#define STATS_Y 19
 #define MANUAL_X 10
-#define MANUAL_Y 5
-//#define COORDINATES_X (BOARD_X + game_info->board_size - 3)
-//#define COORDINATES_X 100
+#define MANUAL_Y 9
 #define COORDINATES_X 10
-#define COORDINATES_Y 17
-//#define COORDINATES_Y (BOARD_Y - 3)
+#define COORDINATES_Y 20
 #define NOT_EMPTY - 1
 #define EMPTY 0
 #define BLACK_PLAYER 1
@@ -105,7 +102,6 @@ struct game_t {
 
 	char char_under_stone[8] = { (char)UPPER_LEFT_CORNER_CHAR };
 };
-
 
 
 int main() {
@@ -319,7 +315,7 @@ int kofights_contains(ko_fight a[], int size, int x, int y) {
 
 
 void set_ko_fight_cords(game_t* game_info) {
-	////kofight sprawdzanie countera kofight 
+	//kofight sprawdzanie countera kofight 
 	if (game_info->ko.ko_fight_mode == ENABLED) {
 		coordinates ko_fight_coords = check_liberties_player_next_to(game_info);
 		int length = sizeof(game_info->ko.ko_fights) / sizeof(ko_fight);
@@ -372,11 +368,9 @@ void save_game_to_file(game_t* game_info, char file_name[]) {
 		for (int i = 0; i < game_info->board_size; i++) {
 			fwrite(game_info->board[i], sizeof(char), game_info->board_size, file);
 		}
-		fwrite(&game_info->coords, sizeof(game_info->coords), 1, file);
 		fwrite(&game_info->score, sizeof(game_info->score), 1, file);
 		fwrite(&game_info->current_player, sizeof(game_info->current_player), 1, file);
 		fwrite(&game_info->ko, sizeof(game_info->ko), 1, file);
-		fwrite(&game_info->insert_mode, sizeof(game_info->insert_mode), 1, file);
 
 		char save_message[500] = "Game saved succesfully at: ";
 		strcat_s(save_message, file_name);
@@ -398,11 +392,9 @@ int load_saved_game(game_t* game_info, char file_name[]) {
 		for (int i = 0; i < game_info->board_size; i++) {
 			fread(game_info->board[i], sizeof(char), board_size, file);
 		}
-		fread(&game_info->coords, sizeof(game_info->coords), 1, file);
 		fread(&game_info->score, sizeof(game_info->score), 1, file);
 		fread(&game_info->current_player, sizeof(game_info->current_player), 1, file);
 		fread(&game_info->ko, sizeof(game_info->ko), 1, file);
-		fread(&game_info->insert_mode, sizeof(game_info->insert_mode), 1, file);
 		fclose(file);
 		return TRUE;
 	}
@@ -538,7 +530,7 @@ void check_if_position_is_empty(game_t* game_info) {
 void try_to_place_stone(game_t* game_info) {
 	//wstawiam pionek
 	game_info->board[game_info->coords.y][game_info->coords.x] = game_info->current_player;
-	//sprawdzan czy ma jakies liberties
+	//sprawdzan czy ma jakies libertie
 	count_liberties(game_info, game_info->coords.y, game_info->coords.x, game_info->current_player);
 
 	if (game_info->liberties.count > 0) {
@@ -580,7 +572,6 @@ void try_to_place_stone(game_t* game_info) {
 		}
 	}
 	restore_board_state(game_info);
-
 }
 
 
@@ -678,7 +669,6 @@ void print_board_column(game_t* game_info, int col_x) {
 
 
 void confirm_placing_stone(game_t* game_info) {
-	//usuwa napis insert mode
 	clear_message();
 	game_info->insert_mode = DISABLED;
 
@@ -699,8 +689,7 @@ void confirm_placing_stone(game_t* game_info) {
 			show_stats(game_info);
 		}
 		restore_board_state(game_info);
-		gettext(game_info->coords.x_relative_to_screen, game_info->coords.y_relative_to_screen, game_info->coords.x_relative_to_screen, game_info->coords.y_relative_to_screen, game_info->char_under_stone);
-
+		save_char_under(game_info);
 	}
 }
 
@@ -970,20 +959,18 @@ void show_legend() {
 	go_line_below(LEGEND_X);
 	cputs("implemented things list:");
 	go_line_below(LEGEND_X);
-	cputs("1) ...");
-	go_line_below(LEGEND_X);
-	cputs("2) ...");
-	go_line_below(LEGEND_X);
+	cputs("a) b) c) d) e) f) g) h) i) j) k)");
+
 }
 
 
 void show_stats(game_t* game_info) {
 	gotoxy(STATS_X, STATS_Y);
-	cputs("first player score: ");
+	cputs("Black score: ");
 	char int_as_string[20];
 	_itoa(game_info->score.black_player, int_as_string, 10);
 	cputs(int_as_string);
-	cputs(" second player score: ");
+	cputs("     White score: ");
 	_itoa(game_info->score.white_player, int_as_string, 10);
 	cputs(int_as_string);
 
@@ -1006,23 +993,21 @@ void show_coordinates(game_t* game_info) {
 
 void show_manual() {
 	gotoxy(MANUAL_X, MANUAL_Y);
-	cputs("arrows: moving the cursor over the board");
+	cputs("arrows: moving the cursor over the board\n");
 	go_line_below(MANUAL_X);
-	cputs("q: quit the program");
+	cputs("q: quit the program\n");
 	go_line_below(MANUAL_X);
-	cputs("n: start a new game");
+	cputs("n: start a new game\n");
 	go_line_below(MANUAL_X);
-	cputs("i: place a stone on the board");
+	cputs("i: place a stone on the board\n");
 	go_line_below(MANUAL_X);
-	cputs("enter: confirm choice and end player's turn");
+	cputs("enter: confirm choice and end player's turn\n");
 	go_line_below(MANUAL_X);
-	cputs("esc: cancel current action");
+	cputs("esc: cancel current action\n");
 	go_line_below(MANUAL_X);
-	cputs("s: save the game state");
+	cputs("s: save the game state\n");
 	go_line_below(MANUAL_X);
-	cputs("l: load the game state");
+	cputs("l: load the game state\n");
 	go_line_below(MANUAL_X);
-	cputs("f: finish the game");
-	go_line_below(MANUAL_X);
-	cputs("h: introduce handicap");
+	cputs("h: introduce handicap\n");
 }
