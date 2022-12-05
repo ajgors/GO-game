@@ -11,7 +11,6 @@ void print_colum_indexes(int y, char last_column_index, int x);
 void clear_message();
 void writte_message(char s[]);
 void initialize_board_with_new_size(game_t* game_info, int new_size);
-//void initialize_board_with_new_size(game_t* game_info);
 void print_board(game_t* game_info, int x_offset);
 void print_horizontal_line(int x);
 void print_char_from_board(game_t* game_info, int y, int x, int x_offset);

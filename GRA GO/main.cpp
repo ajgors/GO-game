@@ -84,8 +84,8 @@ struct game_t {
 	int board_shift = 0;
 
 	struct {
-		double black_player = 0;
-		double white_player = 0;
+		int black_player = 0;
+		int white_player = 0;
 	}score;
 
 	struct {
@@ -546,8 +546,8 @@ void try_to_place_stone(game_t* game_info) {
 		// jeœli zbiliœmy pionek gracza przeciwnego oraz 
 		// aktualna pozycja nie jest zablokowana przez KO FIGHT
 		// to mo¿emy postawic pionek
-
-		int is_position_in_ko_fight = kofights_contains(game_info->ko.ko_fights, sizeof(game_info->ko.ko_fights) / sizeof(game_info->ko.ko_fights[0]), game_info->coords.x, game_info->coords.y);
+		int ko_fights_length = sizeof(game_info->ko.ko_fights) / sizeof(game_info->ko.ko_fights[0]);
+		int is_position_in_ko_fight = kofights_contains(game_info->ko.ko_fights, ko_fights_length , game_info->coords.x, game_info->coords.y);
 
 		int is_player_next_to_captured = FALSE;
 		if (ko_fight_cords.x != -1 && ko_fight_cords.y != -1) is_player_next_to_captured = TRUE;
@@ -585,7 +585,9 @@ void restore_char_after_moving(game_t* game_info, char c[]) {
 
 
 void save_char_under(game_t* game_info) {
-	gettext(game_info->coords.x_relative_to_screen, game_info->coords.y_relative_to_screen, game_info->coords.x_relative_to_screen, game_info->coords.y_relative_to_screen, game_info->char_under_stone);
+	int x = game_info->coords.x_relative_to_screen;
+	int y = game_info->coords.y_relative_to_screen;
+	gettext(x, y, x, y, game_info->char_under_stone);
 }
 
 
@@ -838,7 +840,7 @@ void clear_board(game_t* game_info) {
 
 
 void row_indexing(game_t* game_info) {
-	int number_of_digits_of_board_size = (int)(log10(game_info->board_size) + 1); // zliczanie ilosci cyfr boardz size
+	int number_of_digits_of_board_size = (int)(log10(game_info->board_size) + 1); // zliczanie ilosci cyfr board size
 	int left_to_board_x = BOARD_X - number_of_digits_of_board_size - 1;
 	int right_to_board_x = BOARD_X + game_info->board_size * 2;
 
@@ -913,40 +915,24 @@ void print_horizontal_line(int x) {
 
 
 void print_char_from_board(game_t* game_info, int y, int x, int x_shift) {
-	if (game_info->board[y][x] == BLACK_PLAYER) {
-		cputs("*");
-	}
-	else if (game_info->board[y][x] == WHITE_PLAYER) {
-		cputs("o");
-	}
+	if (game_info->board[y][x] == BLACK_PLAYER) cputs("*");
+	else if (game_info->board[y][x] == WHITE_PLAYER) cputs("o");
 	else if (game_info->board[y][x] == EMPTY) {
 		textcolor(DARKGRAY);
 		if (y == TOP_BORDER) {
 			if (x == LEFT_BORDER || x == x_shift) putch(UPPER_LEFT_CORNER_CHAR);
-			else if (x == RIGHT_BORDER) {
-				putch(UPPER_RIGHT_CORNER_CHAR);
-			}
-			else {
-				putch(HORIZONAL_WITH_VERTICAL_BOTTOM);
-			}
+			else if (x == RIGHT_BORDER) putch(UPPER_RIGHT_CORNER_CHAR);
+			else putch(HORIZONAL_WITH_VERTICAL_BOTTOM);
 		}
 		else if (y == BOTTOM_BORDER) {
 			if (x == LEFT_BORDER || x == x_shift) putch(BOTTOM_LEFT_CORNER_CHAR);
-			else if (x == RIGHT_BORDER) {
-				putch(BOTTOM_RIGHT_CORNER_CHAR);
-			}
-			else {
-				putch(HORIZONTAL_WITH_VERTICAL_UP_CHAR);
-			}
+			else if (x == RIGHT_BORDER) putch(BOTTOM_RIGHT_CORNER_CHAR);
+			else putch(HORIZONTAL_WITH_VERTICAL_UP_CHAR);
 		}
 		else {
 			if (x == LEFT_BORDER || x == x_shift) putch(VERTICAL_WITH_HORIZONTAL_RIGHT_CHAR);
-			else if (x == RIGHT_BORDER) {
-				putch(VERTICAL_WITH_HORIZONTAL_LEFT_CHAR);
-			}
-			else {
-				putch(CROSS_CHAR);
-			}
+			else if (x == RIGHT_BORDER) putch(VERTICAL_WITH_HORIZONTAL_LEFT_CHAR);
+			else putch(CROSS_CHAR);
 		}
 		textcolor(LIGHTGRAY);
 	}
@@ -993,21 +979,21 @@ void show_coordinates(game_t* game_info) {
 
 void show_manual() {
 	gotoxy(MANUAL_X, MANUAL_Y);
-	cputs("arrows: moving the cursor over the board\n");
+	cputs("arrows: moving the cursor over the board");
 	go_line_below(MANUAL_X);
-	cputs("q: quit the program\n");
+	cputs("q: quit the program");
 	go_line_below(MANUAL_X);
-	cputs("n: start a new game\n");
+	cputs("n: start a new game");
 	go_line_below(MANUAL_X);
-	cputs("i: place a stone on the board\n");
+	cputs("i: place a stone on the board");
 	go_line_below(MANUAL_X);
-	cputs("enter: confirm choice and end player's turn\n");
+	cputs("enter: confirm choice and end player's turn");
 	go_line_below(MANUAL_X);
-	cputs("esc: cancel current action\n");
+	cputs("esc: cancel current action");
 	go_line_below(MANUAL_X);
-	cputs("s: save the game state\n");
+	cputs("s: save the game state");
 	go_line_below(MANUAL_X);
-	cputs("l: load the game state\n");
+	cputs("l: load the game state");
 	go_line_below(MANUAL_X);
-	cputs("h: introduce handicap\n");
+	cputs("h: introduce handicap");
 }
