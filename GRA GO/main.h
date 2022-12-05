@@ -54,4 +54,5 @@ void print_char_from_board(game_t* game_info, int y, int x, int x_offset);
 void go_line_below(int x);
 void save_char_under(game_t* game_info);
 void finish_game(game_t* game_info);
+void check_dead_stones(game_t* game_info, int player);
 

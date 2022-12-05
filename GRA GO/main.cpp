@@ -67,7 +67,8 @@
 #define TOP_BORDER 0
 #define LEFT_BORDER 0
 #define SECOND_PLAYER (game_info->current_player == BLACK_PLAYER ? WHITE_PLAYER : BLACK_PLAYER)
-
+#define DEAD_STONE -3
+#define EMPTY_INTERSECTION -2
 typedef struct {
 	coordinates point;
 	int counter;
@@ -936,6 +937,8 @@ void print_char_from_board(game_t* game_info, int y, int x, int x_shift) {
 	else if (game_info->board[y][x] == WHITE_PLAYER) {
 		cputs("o");
 	}
+	else if (game_info->board[y][x] == -2) cputs("I");
+	else if (game_info->board[y][x] == -3) cputs("B");
 	else if (game_info->board[y][x] == EMPTY) {
 		textcolor(DARKGRAY);
 		if (y == TOP_BORDER) {
@@ -987,10 +990,13 @@ void show_stats(game_t* game_info) {
 	gotoxy(STATS_X, STATS_Y);
 	cputs("first player score: ");
 	char int_as_string[20];
-	_itoa(game_info->score.black_player, int_as_string, 10);
+	sprintf(int_as_string, "%.1lf", game_info->score.black_player);
+
+	//_itoa(game_info->score.black_player, int_as_string, 10);
 	cputs(int_as_string);
 	cputs(" second player score: ");
-	_itoa(game_info->score.white_player, int_as_string, 10);
+	//_itoa(game_info->score.white_player, int_as_string, 10);
+	sprintf(int_as_string, "%0.1lf", game_info->score.white_player);
 	cputs(int_as_string);
 
 }
@@ -1046,42 +1052,21 @@ void check(game_t* game_info, int x, int y) {
 		return;
 	}
 
-	if (game_info->board[y][x] == 0) {
+	if (game_info->board[y][x] == EMPTY) {
 		game_info->board[y][x] = MARKER;
 		check(game_info, x - 1, y);
 		check(game_info, x + 1, y);
 		check(game_info, x, y - 1);
 		check(game_info, x, y + 1);
 	}
-
 }
 
-
-void check_whites(game_t* game_info, int x, int y) {
-	if (x < 0 || x >= game_info->board_size || y < 0 || y >= game_info->board_size) return;
-
-	if (game_info->board[y][x] == WHITE_PLAYER) {
-		game_info->scoring_board[y][x] = WHITE_PLAYER;
-		return;
-	}
-
-	if (game_info->board[y][x] == 0 || game_info->board[y][x] == BLACK_PLAYER) {
-		game_info->board[y][x] = MARKER;
-		check(game_info, x - 1, y);
-		check(game_info, x + 1, y);
-		check(game_info, x, y - 1);
-		check(game_info, x, y + 1);
-	}
-
-}
 
 void finish_game(game_t* game_info) {
 	int flag_only_whites = 1;
 	int flag_only_blacks = 1;
 	int scoring_empty = 1;
 
-
-	int xd = 0;
 	for (int y = 0; y < game_info->board_size; y++) {
 		for (int x = 0; x < game_info->board_size; x++) {
 			game_info->scoring_board[y][x] = 0;
@@ -1090,21 +1075,21 @@ void finish_game(game_t* game_info) {
 
 	for (int y = 0; y < game_info->board_size; y++) {
 		for (int x = 0; x < game_info->board_size; x++) {
-			if (game_info->board[y][x] == 0) {
+			if (game_info->board[y][x] == EMPTY) {
 				flag_only_whites = 1;
 				flag_only_blacks = 1;
 				check(game_info, x, y);
 				unmark_board(game_info);
 
+				int cur_x = x;
+				int cur_y = y;
 				for (int y = 0; y < game_info->board_size; y++) {
 					for (int x = 0; x < game_info->board_size; x++) {
 						if (game_info->scoring_board[y][x] == BLACK_PLAYER) {
 							flag_only_whites = 0;
-							xd = 1;
 						}
 					}
 				}
-
 				for (int y = 0; y < game_info->board_size; y++) {
 					for (int x = 0; x < game_info->board_size; x++) {
 						if (game_info->scoring_board[y][x] == WHITE_PLAYER) {
@@ -1112,23 +1097,31 @@ void finish_game(game_t* game_info) {
 						}
 					}
 				}
-				if (flag_only_blacks == 1) game_info->score.black_player += 1;
-				else if (flag_only_whites == 1) game_info->score.white_player += 1;
+				if (flag_only_blacks == 1) {
+					game_info->score.black_player += 1;
+					game_info->board[cur_y][cur_x] = EMPTY_INTERSECTION;
 
+				}
+				else if (flag_only_whites == 1) {
+					game_info->score.white_player += 1;
+					game_info->board[cur_y][cur_x] = EMPTY_INTERSECTION;
+				}
+
+				//if (y > 0 && y < game_info->board_size - 1 && x > 0 && x < game_info->board_size - 1) {
+				//	game_info->board[cur_y][cur_x] = -2;
+
+				//}
 				for (int y = 0; y < game_info->board_size; y++) {
 					for (int x = 0; x < game_info->board_size; x++) {
 						game_info->scoring_board[y][x] = 0;
 					}
 				}
 			}
-			if (game_info->board[y][x] == BLACK_PLAYER) {
-				flag_only_whites = 1;
-				flag_only_blacks = 1;
-				check(game_info, x, y);
-				unmark_board(game_info);
-			}
 		}
 	}
+
+	check_dead_stones(game_info, BLACK_PLAYER);
+	check_dead_stones(game_info, WHITE_PLAYER);
 
 	if (game_info->handicap_mode_used == TRUE) {
 		game_info->score.white_player += 0.5;
@@ -1136,7 +1129,42 @@ void finish_game(game_t* game_info) {
 	else {
 		game_info->score.white_player += 6.5;
 	}
-
 	refresh_view(game_info, 0, 0);
+}
 
+void check_dead_stones(game_t* game_info, int player) {
+	//wstawiamy kamienie gracza przeciwnego i sprawdzamy czy zbije jakies pionki gracza aktualnego
+	game_info->current_player = SECOND_PLAYER;
+	for (int y = 0; y < game_info->board_size; y++) {
+		for (int x = 0; x < game_info->board_size; x++) {
+			if (game_info->board[y][x] == player) {
+				count_liberties(game_info, y, x, player);
+				unmark_board(game_info);
+
+
+
+
+				if (game_info->liberties.count > 0) {
+					for (int i = 0; i < game_info->liberties.count; i++) {
+						game_info->coords.y = game_info->liberties.ptr[i].y;
+						game_info->coords.x = game_info->liberties.ptr[i].x;
+						try_to_place_stone(game_info);
+						clear_liberties_and_stones_group(game_info);
+						game_info->board[game_info->liberties.ptr[i].y][game_info->liberties.ptr[i].x] = EMPTY_INTERSECTION;
+					}
+					if (game_info->liberties.count == 0) {
+						if (player == WHITE_PLAYER) game_info->score.black_player++;
+						else if (player == BLACK_PLAYER) game_info->score.white_player++;
+
+						for (int k = 0; k < game_info->stones_group.count; k++) {
+							game_info->board[game_info->stones_group.ptr[k].y][game_info->stones_group.ptr[k].x] = DEAD_STONE;
+
+						}
+					}
+				}
+			}
+			clear_liberties_and_stones_group(game_info);
+		}
+	}
+	clear_liberties_and_stones_group(game_info);
 }
