@@ -1,14 +1,12 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include<stdio.h>
-#include"conio2.h"
-#include "string.h"
-#include "queue.h"
+#include <stdio.h>
 #include <string.h>
+#include <cstdlib>
+#include <math.h>
+#include "conio2.h"
 #include "stos.h"
-#include<math.h>
 #include "main.h"
 #include "vector.h"
-#include <cstdlib>
 
 #define BOARD_X 70
 #define BOARD_Y 6
@@ -20,14 +18,16 @@
 #define MANUAL_Y 9
 #define COORDINATES_X 10
 #define COORDINATES_Y 20
-#define NOT_EMPTY - 1
+#define MENU_X 40
+#define MENU_Y 7
+#define MESSAGE_X 50
+#define MESSAGE_Y 2
 #define EMPTY 0
 #define BLACK_PLAYER 1
 #define WHITE_PLAYER 2
 #define MARKER 4
 #define MARKED_BLACK_PLAYER 5
 #define MARKED_WHITE_PLAYER 6
-#define CAPTURED 7
 #define LIBERTY 8
 #define ZNAK_ENTER 0x0d
 #define ZNAK_ESC 0x1b
@@ -36,13 +36,7 @@
 #define LEFT_ARROW 0x4b
 #define RIGHT_ARROW 0x4d
 #define ZNAK_BACKSPACE 0x08
-#define TRUE 1
-#define FALSE 0
 #define NEXT_Y wherey() + 1
-#define MENU_X 40
-#define MENU_Y 7
-#define MESSAGE_X 50
-#define MESSAGE_Y 2
 #define ENABLED 1
 #define DISABLED 0
 #define CURRENT_STONE_COLOR LIGHTCYAN
@@ -64,6 +58,13 @@
 #define TOP_BORDER 0
 #define LEFT_BORDER 0
 #define SECOND_PLAYER (game_info->current_player == BLACK_PLAYER ? WHITE_PLAYER : BLACK_PLAYER)
+#define INSERT_MODE_CHAR 'i'
+#define NEW_GAME_CHAR 'n'
+#define REFRESH_CHAR 'r'
+#define SAVE_CHAR 's'
+#define LOAD_SAVE_CHAR 'l'
+#define HANDICAP_MODE_CHAR 'h'
+#define QUIT_GAME_CHAR 'q'
 
 typedef struct {
 	coordinates point;
@@ -80,7 +81,7 @@ struct game_t {
 	int pressed_button = 0;
 	int insert_mode = DISABLED;
 	int handicap_mode = DISABLED;
-	int handicap_mode_used = FALSE;
+	int handicap_mode_used = false;
 	int board_shift = 0;
 
 	struct {
@@ -116,77 +117,76 @@ int main() {
 	Conio2_Init();
 #endif
 
-	settitle("Igor Stadnicki");		//Ustawienie tytu³u ekranu
-	_setcursortype(_NOCURSOR);      //UKRYCIE KURSORA
-	clrscr();						//WYCZYSZCZENIE EKRANU
-	show_manual();					//INSTRUKCJA
-	show_stats(&game_info);			//STATYSTYKI
-	row_indexing(&game_info);		//NUMERACAJA WIERSZY
-	column_indexing(&game_info, 0);	//NUMERACAJ KOLUMN
-	show_legend();					//LEGENDA
-	show_coordinates(&game_info);	//KOORDYNATY
-	print_board(&game_info, 0);			//WYŒWIETLANIE PLANSZY
+	settitle("Igor Stadnicki");		//title of screen
+	_setcursortype(_NOCURSOR);      //hide cursor
+	clrscr();						
+	show_manual();					
+	show_stats(&game_info);			
+	row_indexing(&game_info);		
+	column_indexing(&game_info, 0);	
+	show_legend();					
+	show_coordinates(&game_info);	
+	print_board(&game_info, 0);	
 
 	do {
-		show_coordinates(&game_info); //aktualizacja pozycji gracza
+		show_coordinates(&game_info); //updates coordinates 
 
-		draw_stone(&game_info);		  //Narysowanie kamienia
+		draw_stone(&game_info);		  
 
 		get_pressed_button(game_info);
 
 		check_pressed_buttton(&game_info);
 
-	} while (game_info.pressed_button != 'q');
+	} while (game_info.pressed_button != QUIT_GAME_CHAR);
 
 	clrscr();
 	return 0;
 }
 
 
+//gets which button was pressed
 void get_pressed_button(game_t& game_info) {
 	game_info.pressed_button = getch();
 }
 
 
+//check which button was pressed
 void check_pressed_buttton(game_t* game_info) {
-
-	// we do not want the key 'H' to play role of "up arrow"
-	// so we check if the first code is zero
+	//when arrows are pressed 2 results are shown the first one is 0
 	if (game_info->pressed_button == 0 && game_info->insert_mode == DISABLED) {
 		clear_message();
 		move_stone_on_board(game_info);
 	}
-	else if (game_info->pressed_button == 'i' && game_info->insert_mode == DISABLED) {
+	else if (game_info->pressed_button == INSERT_MODE_CHAR && game_info->insert_mode == DISABLED) {
 		check_if_position_is_empty(game_info);
 	}
-	else if (game_info->pressed_button == ZNAK_ENTER && game_info->insert_mode == ENABLED) { // 
+	else if (game_info->pressed_button == ZNAK_ENTER && game_info->insert_mode == ENABLED) { 
 		confirm_placing_stone(game_info);
 	}
 	else if (game_info->pressed_button == ZNAK_ESC) {
 		clear_message();
 		cancel_placing_stone(game_info);
 	}
-	else if (game_info->pressed_button == 'n') { // N - game reset
+	else if (game_info->pressed_button == NEW_GAME_CHAR) { 
 		start_new_game(game_info);
 	}
-	else if (game_info->pressed_button == 'r') { // R - refresh
+	else if (game_info->pressed_button == REFRESH_CHAR) {
 		refresh_view(game_info, 0, 0);
 	}
-	else if (game_info->pressed_button == 's') { //S - gane save
+	else if (game_info->pressed_button == SAVE_CHAR) {
 		save_game(game_info);
 	}
-	else if (game_info->pressed_button == 'l') { // L - load save
-		open_saved_game(game_info);
+	else if (game_info->pressed_button == LOAD_SAVE_CHAR) {
+		show_enter_save_menu(game_info);
 	}
-	else if (game_info->pressed_button == 'h') {
+	else if (game_info->pressed_button == HANDICAP_MODE_CHAR) {
 		introduce_handicap(game_info);
 	}
-	else if (game_info->pressed_button == 'f') {
-		refresh_view(game_info, 0, 0);
-	}
+
 }
 
 
+//saves liberties, and stones group coordinates
 void count_liberties(game_t* game_info, int y, int x, int player_color) {
 	if (x < 0 || x >= game_info->board_size || y < 0 || y >= game_info->board_size) return;
 	int current_stone = game_info->board[y][x];
@@ -206,6 +206,7 @@ void count_liberties(game_t* game_info, int y, int x, int player_color) {
 }
 
 
+//removes captured stones from board
 int remove_captured(game_t* game_info) {
 	if (game_info->liberties.count == 0) {
 		for (int i = 0; i < game_info->stones_group.count; i++) {
@@ -217,6 +218,7 @@ int remove_captured(game_t* game_info) {
 }
 
 
+//scanns board for stones to be captured, when found removes them from board
 int capture(game_t* game_info, int player_to_capture) {
 	restore_board_state(game_info);
 	int points = 0;
@@ -234,12 +236,14 @@ int capture(game_t* game_info, int player_to_capture) {
 }
 
 
+//unmarks board and clears liberties, group stones arrays
 void restore_board_state(game_t* game_info) {
 	unmark_board(game_info);
 	clear_liberties_and_stones_group(game_info);
 }
 
 
+//unmarks stones board
 void unmark_board(game_t* game_info) {
 	for (int y = 0; y < game_info->board_size; y++) {
 		for (int x = 0; x < game_info->board_size; x++) {
@@ -257,6 +261,7 @@ void unmark_board(game_t* game_info) {
 }
 
 
+//empties liberties and stones group vector
 void clear_liberties_and_stones_group(game_t* game_info) {
 	free(game_info->liberties.ptr);
 	free(game_info->stones_group.ptr);
@@ -265,6 +270,7 @@ void clear_liberties_and_stones_group(game_t* game_info) {
 }
 
 
+//check if player next to has liberties, when not returns his coordinates, when has liberties returns {-1,-1}
 coordinates check_liberties_player_next_to(game_t* game_info) {
 	restore_board_state(game_info);
 	int x = game_info->coords.x;
@@ -306,6 +312,7 @@ coordinates check_liberties_player_next_to(game_t* game_info) {
 }
 
 
+//check if ko fight array contains x,y coordinates
 int kofights_contains(ko_fight a[], int size, int x, int y) {
 	for (int i = 0; i < size; i++) {
 		if (a[i].point.x == x && a[i].point.y == y) return i;
@@ -314,8 +321,8 @@ int kofights_contains(ko_fight a[], int size, int x, int y) {
 }
 
 
+//sets coords in ko fight to ko fight array
 void set_ko_fight_cords(game_t* game_info) {
-	//kofight sprawdzanie countera kofight 
 	if (game_info->ko.ko_fight_mode == ENABLED) {
 		coordinates ko_fight_coords = check_liberties_player_next_to(game_info);
 		int length = sizeof(game_info->ko.ko_fights) / sizeof(ko_fight);
@@ -330,6 +337,7 @@ void set_ko_fight_cords(game_t* game_info) {
 }
 
 
+//updates counters of ko fights 
 void update_ko_fight_counters(game_t* game_info) {
 	int length = sizeof(game_info->ko.ko_fights) / sizeof(ko_fight);
 	for (int i = 0; i < length; i++) {
@@ -343,20 +351,21 @@ void update_ko_fight_counters(game_t* game_info) {
 }
 
 
-//Funkcja zwraca -1 je¿eli gracz anuluje wpisywanie (wciœnie ESC)
+//Funkcja zwraca false je¿eli gracz anuluje wpisywanie (wciœnie ESC)
 int get_input_from_user(char string[]) {
 	char entered_char = getche();
 	int index = 0;
 	while (entered_char != ZNAK_ENTER) {
-		if (entered_char == ZNAK_ESC) return -1;
+		if (entered_char == ZNAK_ESC) return false;
 		string[index] = entered_char;
 		index++;
 		entered_char = getche();
 	}
-	return TRUE;
+	return true;
 }
 
 
+//save current game state to file 
 void save_game_to_file(game_t* game_info, char file_name[]) {
 	FILE* file = fopen(file_name, "w");
 	if (file == NULL) {
@@ -380,15 +389,16 @@ void save_game_to_file(game_t* game_info, char file_name[]) {
 };
 
 
+//loads saved game file and loads game state from save
 int load_saved_game(game_t* game_info, char file_name[]) {
 	FILE* file = fopen(file_name, "r");
 	if (file == NULL) {
-		return FALSE;
+		return false;
 	}
 	else {
 		int board_size = 0;
 		fread(&board_size, sizeof(int), 1, file);
-		initialize_board_with_new_size(game_info, board_size);
+		initialize_board_with_size(game_info, board_size);
 		for (int i = 0; i < game_info->board_size; i++) {
 			fread(game_info->board[i], sizeof(char), board_size, file);
 		}
@@ -396,11 +406,12 @@ int load_saved_game(game_t* game_info, char file_name[]) {
 		fread(&game_info->current_player, sizeof(game_info->current_player), 1, file);
 		fread(&game_info->ko, sizeof(game_info->ko), 1, file);
 		fclose(file);
-		return TRUE;
+		return true;
 	}
 }
 
 
+//shows custom menu where custom board size can be entered
 void show_custom_board_menu(game_t* game_info) {
 	clrscr();
 	char message[] = "Enter board size: ";
@@ -408,7 +419,7 @@ void show_custom_board_menu(game_t* game_info) {
 	int board_size = get_board_size_from_user();
 
 	if (board_size > 0) {
-		initialize_board_with_new_size(game_info, board_size);
+		initialize_board_with_size(game_info, board_size);
 	}
 	else {
 		clear_message();
@@ -417,6 +428,7 @@ void show_custom_board_menu(game_t* game_info) {
 }
 
 
+//get input from user and save it to int
 int get_board_size_from_user() {
 	char c[20];
 	get_input_from_user(c);
@@ -425,14 +437,15 @@ int get_board_size_from_user() {
 }
 
 
+//enables, and disables hadicap mode
 void introduce_handicap(game_t* game_info) {
-	if (is_board_empty(game_info) == TRUE) {
+	if (is_board_empty(game_info)) {
 		game_info->handicap_mode = ENABLED;
 		char message[] = "Handicap mode - press h to disable";
 		writte_message(message);
 	}
 	else if (game_info->handicap_mode == ENABLED) {
-		game_info->handicap_mode_used = TRUE;
+		game_info->handicap_mode_used = true;
 		game_info->handicap_mode = DISABLED;
 		char message[] = "Handicap mode disabled";
 		game_info->current_player = WHITE_PLAYER;
@@ -444,16 +457,19 @@ void introduce_handicap(game_t* game_info) {
 	}
 }
 
+
+//checks if board is empty
 int is_board_empty(game_t* game_info) {
 	for (int y = 0; y < game_info->board_size; y++) {
 		for (int x = 0; x < game_info->board_size; x++) {
-			if (game_info->board[y][x] != 0) return FALSE;
+			if (game_info->board[y][x] != 0) return false;
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 
+//refreshes view 
 void refresh_view(game_t* game_info, int x, int y) {
 	clrscr();
 	print_board(game_info, 0);
@@ -476,6 +492,7 @@ void refresh_view(game_t* game_info, int x, int y) {
 }
 
 
+//shows menu for selecting board size and loading game save
 void show_select_board_size_menu(game_t* game_info) {
 	gotoxy(MENU_X, MENU_Y);
 	cputs("select board size to select press 1-5");
@@ -496,26 +513,27 @@ void show_select_board_size_menu(game_t* game_info) {
 	}
 	if (pressed_number == '1') {
 		int board_size = 9;
-		initialize_board_with_new_size(game_info, board_size);
+		initialize_board_with_size(game_info, board_size);
 	}
 	else if (pressed_number == '2') {
 		int board_size = 13;
-		initialize_board_with_new_size(game_info, board_size);
+		initialize_board_with_size(game_info, board_size);
 	}
 	else if (pressed_number == '3') {
 		int board_size = 19;
-		initialize_board_with_new_size(game_info, board_size);
+		initialize_board_with_size(game_info, board_size);
 	}
 	else if (pressed_number == '4') {
 		show_custom_board_menu(game_info);
 	}
 	else if (pressed_number == '5') {
 		clrscr();
-		open_saved_game(game_info);
+		show_enter_save_menu(game_info);
 	}
 }
 
 
+//check if current board position is empty
 void check_if_position_is_empty(game_t* game_info) {
 	if (game_info->board[game_info->coords.y][game_info->coords.x] == EMPTY) {
 		try_to_place_stone(game_info);
@@ -528,37 +546,33 @@ void check_if_position_is_empty(game_t* game_info) {
 
 
 void try_to_place_stone(game_t* game_info) {
-	//wstawiam pionek
 	game_info->board[game_info->coords.y][game_info->coords.x] = game_info->current_player;
-	//sprawdzan czy ma jakies libertie
 	count_liberties(game_info, game_info->coords.y, game_info->coords.x, game_info->current_player);
 
+	//if current position has any liberties we can place stone
 	if (game_info->liberties.count > 0) {
-		game_info->insert_mode = TRUE;
+		game_info->insert_mode = true;
 		char message[] = "Insert mode";
 		writte_message(message);
 	}
 	else {
-		//sprawdzam czy postawiony pionek zbije pionek gracza przeciwnego
-		//funkcja zwraca kordynaty zbitego gracza lub -1 jeœli nie zmbijeF
+		//we can place stone at position that doesnt have liberties
+		//if and only if it captures at least one oposite player stone
 		coordinates ko_fight_cords = check_liberties_player_next_to(game_info);
-
-		// jeœli zbiliœmy pionek gracza przeciwnego oraz 
-		// aktualna pozycja nie jest zablokowana przez KO FIGHT
-		// to mo¿emy postawic pionek
 		int ko_fights_length = sizeof(game_info->ko.ko_fights) / sizeof(game_info->ko.ko_fights[0]);
 		int is_position_in_ko_fight = kofights_contains(game_info->ko.ko_fights, ko_fights_length , game_info->coords.x, game_info->coords.y);
-
-		int is_player_next_to_captured = FALSE;
-		if (ko_fight_cords.x != -1 && ko_fight_cords.y != -1) is_player_next_to_captured = TRUE;
-
-		if (is_player_next_to_captured == TRUE && is_position_in_ko_fight == -1) {
+		int is_player_next_to_captured = false;
+		if (ko_fight_cords.x != -1 && ko_fight_cords.y != -1) is_player_next_to_captured = true;
+	
+		//check if player captured oposite stone and current position is not in ko fight
+		if (is_player_next_to_captured && is_position_in_ko_fight == -1) {
 			game_info->insert_mode = ENABLED;
 			game_info->ko.ko_fight_mode = ENABLED;
 			char message[] = "Inset mode KO";
 			writte_message(message);
 		}
 		else {
+			//if can capture but position is in ko fight
 			game_info->board[game_info->coords.y][game_info->coords.x] = EMPTY;
 			if (is_position_in_ko_fight != -1) {
 				char ko_message[] = "Position ko fight";
@@ -575,6 +589,7 @@ void try_to_place_stone(game_t* game_info) {
 }
 
 
+//prints char that was at current position before current player stone here  
 void restore_char_after_moving(game_t* game_info, char c[]) {
 	gotoxy(game_info->coords.x_relative_to_screen, game_info->coords.y_relative_to_screen);
 	if (c[0] != '*' && c[0] != 'o')  textcolor(BOARD_COLOR);
@@ -584,6 +599,7 @@ void restore_char_after_moving(game_t* game_info, char c[]) {
 }
 
 
+//saves char under current player stone 
 void save_char_under(game_t* game_info) {
 	int x = game_info->coords.x_relative_to_screen;
 	int y = game_info->coords.y_relative_to_screen;
@@ -591,6 +607,7 @@ void save_char_under(game_t* game_info) {
 }
 
 
+//check which arrow was pressed and moves current stone int that direction
 void move_stone_on_board(game_t* game_info) {
 	game_info->pressed_button = getch();
 
@@ -629,6 +646,7 @@ void move_stone_on_board(game_t* game_info) {
 }
 
 
+//scoll board to left when current move will go outside of board 
 void check_for_left_scroll(game_t* game_info) {
 	text_info info;
 	gettextinfo(&info);
@@ -645,6 +663,7 @@ void check_for_left_scroll(game_t* game_info) {
 }
 
 
+//scrolls board to right when current move will go outside of board
 void check_for_right_scroll(game_t* game_info) {
 	text_info info;
 	gettextinfo(&info);
@@ -661,6 +680,7 @@ void check_for_right_scroll(game_t* game_info) {
 }
 
 
+//print one board column 
 void print_board_column(game_t* game_info, int col_x) {
 	for (int y = 0; y < game_info->board_size; y++) {
 		print_char_from_board(game_info, y, col_x, 0);
@@ -670,18 +690,16 @@ void print_board_column(game_t* game_info, int col_x) {
 }
 
 
+//places stone at current position, saves and updates ko fight, checks for capture, switches player to oposite 
 void confirm_placing_stone(game_t* game_info) {
 	clear_message();
 	game_info->insert_mode = DISABLED;
 
 	if (game_info->handicap_mode == DISABLED) {
-		//inkrementacja licznikow ko fight
 		update_ko_fight_counters(game_info);
 
-		////zapisywanie koordynatow pozycji ko
 		set_ko_fight_cords(game_info);
 
-		// zamieniamy aktualnego gracza na przeciwnego
 		int points = capture(game_info, SECOND_PLAYER); // gracz przeciwny
 		add_points_to_player(game_info, points);
 		swap_current_player(game_info);
@@ -701,6 +719,7 @@ void add_points_to_player(game_t* game_info, int points) {
 }
 
 
+//swaps current player to oposite one
 void swap_current_player(game_t* game_info) {
 	game_info->current_player == BLACK_PLAYER ? game_info->current_player = WHITE_PLAYER : game_info->current_player = BLACK_PLAYER;
 }
@@ -736,7 +755,7 @@ void save_game(game_t* game_info) {
 		writte_message(message);
 		char file_name[256] = { 0 };
 		int if_successed = get_save_file_name(file_name);
-		if (if_successed == TRUE) {
+		if (if_successed) {
 			save_game_to_file(game_info, file_name);
 		}
 		else {
@@ -750,6 +769,7 @@ void save_game(game_t* game_info) {
 }
 
 
+//draws stone at current position
 void draw_stone(game_t* game_info) {
 	gotoxy(game_info->coords.x_relative_to_screen, game_info->coords.y_relative_to_screen);
 	textcolor(CURRENT_STONE_COLOR);
@@ -758,15 +778,16 @@ void draw_stone(game_t* game_info) {
 }
 
 
-void open_saved_game(game_t* game_info) {
+//shows menu for loading game save file
+void show_enter_save_menu(game_t* game_info) {
 	char message[] = "Enter save file name: ";
 	writte_message(message);
 	char file_name[256] = { 0 };
 	int if_successed = get_save_file_name(file_name);
 	int save = load_saved_game(game_info, file_name);
 
-	if (if_successed == TRUE) {
-		if (save == TRUE) {
+	if (if_successed) {
+		if (save) {
 			refresh_view(game_info, 0, 0);
 			char load_message[] = "Game loaded succesfully";
 			writte_message(load_message);
@@ -775,15 +796,16 @@ void open_saved_game(game_t* game_info) {
 			char error_message[] = "Error while loading save";
 			gotoxy(50, NEXT_Y);
 			cputs("Error while loading save");
-			open_saved_game(game_info);
+			show_enter_save_menu(game_info);
 		}
 	}
+	//if player cancels enterng file
 	else {
-		//Sprawdzamy czy gracz jest w menu
 		if (game_info->board_size != 0) {
 			char message[] = "Cancelled";
 			writte_message(message);
 		}
+		//check if player is in select board menu show it again 
 		else {
 			clrscr();
 			show_select_board_size_menu(game_info);
@@ -793,6 +815,7 @@ void open_saved_game(game_t* game_info) {
 }
 
 
+//frees memory allocated to board array
 void free_board_memory(game_t* game_info) {
 	for (int i = 0; i < game_info->board_size; i++) {
 		free(game_info->board[i]);
@@ -801,16 +824,17 @@ void free_board_memory(game_t* game_info) {
 }
 
 
-void initialize_board_with_new_size(game_t* game_info, int new_size) {
+//alocates memory for board array with specific size
+void initialize_board_with_size(game_t* game_info, int size) {
 	free_board_memory(game_info);
-	game_info->board = (char**)malloc(new_size * sizeof(char*));
+	game_info->board = (char**)malloc(size * sizeof(char*));
 	if (game_info->board) {
-		for (int i = 0; i < new_size; i++) {
+		for (int i = 0; i < size; i++) {
 			if (game_info->board) {
-				*(game_info->board + i) = (char*)malloc(new_size * sizeof(int));
+				*(game_info->board + i) = (char*)malloc(size * sizeof(int));
 			}
 		}
-		game_info->board_size = new_size;
+		game_info->board_size = size;
 		clear_board(game_info);
 	}
 }
@@ -832,24 +856,25 @@ void go_line_below(int x) {
 }
 
 
+// empties whole board
 void clear_board(game_t* game_info) {
 	for (int y = 0; y < game_info->board_size; y++)
 		for (int x = 0; x < game_info->board_size; x++)
-			game_info->board[y][x] = 0;
+			game_info->board[y][x] = EMPTY;
 }
 
 
+//print row indexing left and right to the board
 void row_indexing(game_t* game_info) {
-	int number_of_digits_of_board_size = (int)(log10(game_info->board_size) + 1); // zliczanie ilosci cyfr board size
+	int number_of_digits_of_board_size = (int)(log10(game_info->board_size) + 1); 
 	int left_to_board_x = BOARD_X - number_of_digits_of_board_size - 1;
 	int right_to_board_x = BOARD_X + game_info->board_size * 2;
 
-	//Numeracja wierszy
 	print_row_indexes(game_info, left_to_board_x);
 	print_row_indexes(game_info, right_to_board_x);
 }
 
-
+//prints whole board row at specific x
 void print_row_indexes(game_t* game_info, int x) {
 	gotoxy(x, BOARD_Y);
 	char number[10];
@@ -861,6 +886,7 @@ void print_row_indexes(game_t* game_info, int x) {
 }
 
 
+//prints board columns idexes above and under board 
 void column_indexing(game_t* game_info, int index_offset) {
 	char last_column_index = 'A' + game_info->board_size;
 	int above_board_y = BOARD_Y - 1;
@@ -871,6 +897,7 @@ void column_indexing(game_t* game_info, int index_offset) {
 }
 
 
+//prints column idexes at specific y, including board scroll
 void print_colum_indexes(int y, char last_column_index, int index_offset) {
 	gotoxy(BOARD_X, y);
 	for (char col_index = 'A' + index_offset; col_index < last_column_index; col_index++) {
@@ -881,6 +908,7 @@ void print_colum_indexes(int y, char last_column_index, int index_offset) {
 }
 
 
+//resets game to initial state
 void initial_game_state(game_t* game_info) {
 	clear_board(game_info);
 	game_info->current_player = BLACK_PLAYER;
@@ -895,6 +923,7 @@ void initial_game_state(game_t* game_info) {
 }
 
 
+//print board
 void print_board(game_t* game_info, int x_shift) {
 	gotoxy(BOARD_X, BOARD_Y);
 	for (int y = 0; y < game_info->board_size; y++) {
@@ -907,6 +936,7 @@ void print_board(game_t* game_info, int x_shift) {
 }
 
 
+//prints one horizontal line char
 void print_horizontal_line(int x) {
 	textcolor(DARKGRAY);
 	putch(HORIZONATL_LINE_CHAR);
@@ -914,6 +944,7 @@ void print_horizontal_line(int x) {
 }
 
 
+//prints one char from board at x,y including x board scroll
 void print_char_from_board(game_t* game_info, int y, int x, int x_shift) {
 	if (game_info->board[y][x] == BLACK_PLAYER) cputs("*");
 	else if (game_info->board[y][x] == WHITE_PLAYER) cputs("o");
@@ -939,6 +970,7 @@ void print_char_from_board(game_t* game_info, int y, int x, int x_shift) {
 }
 
 
+//prints legend
 void show_legend() {
 	gotoxy(LEGEND_X, LEGEND_Y);
 	cputs("Igor Stadnicki 193435");
@@ -950,6 +982,7 @@ void show_legend() {
 }
 
 
+//prints players score
 void show_stats(game_t* game_info) {
 	gotoxy(STATS_X, STATS_Y);
 	cputs("Black score: ");
@@ -962,7 +995,7 @@ void show_stats(game_t* game_info) {
 
 }
 
-
+//prints current player coordinates
 void show_coordinates(game_t* game_info) {
 	gotoxy(COORDINATES_X, COORDINATES_Y);
 	cputs("                            ");
@@ -977,6 +1010,7 @@ void show_coordinates(game_t* game_info) {
 }
 
 
+//prints manual
 void show_manual() {
 	gotoxy(MANUAL_X, MANUAL_Y);
 	cputs("arrows: moving the cursor over the board");
