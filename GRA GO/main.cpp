@@ -171,7 +171,7 @@ void check_pressed_buttton(game_t* game_info) {
 		start_new_game(game_info);
 	}
 	else if (game_info->pressed_button == REFRESH_CHAR) {
-		refresh_view(game_info, 0, 0);
+		refresh_view(game_info);
 	}
 	else if (game_info->pressed_button == SAVE_CHAR) {
 		save_game(game_info);
@@ -462,7 +462,7 @@ void introduce_handicap(game_t* game_info) {
 int is_board_empty(game_t* game_info) {
 	for (int y = 0; y < game_info->board_size; y++) {
 		for (int x = 0; x < game_info->board_size; x++) {
-			if (game_info->board[y][x] != 0) return false;
+			if (game_info->board[y][x] != EMPTY) return false;
 		}
 	}
 	return true;
@@ -470,14 +470,14 @@ int is_board_empty(game_t* game_info) {
 
 
 //refreshes view 
-void refresh_view(game_t* game_info, int x, int y) {
+void refresh_view(game_t* game_info) {
 	clrscr();
 	print_board(game_info, 0);
 	show_manual();
 	show_stats(game_info);
 	show_legend();
 	row_indexing(game_info);
-	column_indexing(game_info, x);
+	column_indexing(game_info, 0);
 	struct text_info info;
 	gettextinfo(&info);
 	game_info->board_shift = 0;
@@ -709,8 +709,8 @@ void confirm_placing_stone(game_t* game_info) {
 			show_stats(game_info);
 		}
 		restore_board_state(game_info);
-		save_char_under(game_info);
 	}
+	save_char_under(game_info);
 }
 
 
@@ -738,7 +738,7 @@ void start_new_game(game_t* game_info) {
 	clrscr();
 	show_select_board_size_menu(game_info);
 	initial_game_state(game_info);
-	refresh_view(game_info, 0, 0);
+	refresh_view(game_info);
 }
 
 
@@ -788,7 +788,7 @@ void show_enter_save_menu(game_t* game_info) {
 
 	if (if_successed) {
 		if (save) {
-			refresh_view(game_info, 0, 0);
+			refresh_view(game_info);
 			char load_message[] = "Game loaded succesfully";
 			writte_message(load_message);
 		}
@@ -926,8 +926,13 @@ void initial_game_state(game_t* game_info) {
 //print board
 void print_board(game_t* game_info, int x_shift) {
 	gotoxy(BOARD_X, BOARD_Y);
+	text_info info;
+	gettextinfo(&info);
 	for (int y = 0; y < game_info->board_size; y++) {
 		for (int x = x_shift; x < game_info->board_size; x++) {
+		gettextinfo(&info);
+		//cut board when it doesnt fit in screen
+		if (info.curx + 1 > info.screenwidth) break;
 			print_char_from_board(game_info, y, x, x_shift);
 			if (x < game_info->board_size - 1) print_horizontal_line(x);
 		}

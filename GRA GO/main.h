@@ -1,8 +1,4 @@
-//int check_liberties_player_next_to(game_t *game_info, int boardIndex);
-//void restore_char_after_moving(game_t *game_info, int boardIndex);
-
 #include "stos.h"
-
 
 struct game_t;
 void clear_board(game_t* game_info);
@@ -44,7 +40,7 @@ int is_board_empty(game_t* game_info);
 void clear_liberties_and_stones_group(game_t* game_info);
 void unmark_board(game_t* game_info);
 void show_select_board_size_menu(game_t* game_info);
-void refresh_view(game_t* game_info, int x, int y);
+void refresh_view(game_t* game_info);
 void restore_board_state(game_t* game_info);
 void print_board_column(game_t* game_info, int col_x);
 void swap_current_player(game_t* game_info);
