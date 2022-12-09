@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <math.h>
 #include "conio2.h"
-#include "stos.h"
 #include "main.h"
 #include "vector.h"
 

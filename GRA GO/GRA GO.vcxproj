@@ -129,13 +129,11 @@
   <ItemGroup>
     <ClCompile Include="conio2.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="stos.cpp" />
     <ClCompile Include="vector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="conio2.h" />
     <ClInclude Include="main.h" />
-    <ClInclude Include="stos.h" />
     <ClInclude Include="vector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

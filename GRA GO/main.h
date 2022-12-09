@@ -1,5 +1,3 @@
-#include "stos.h"
-
 struct game_t;
 void clear_board(game_t* game_info);
 void print_row_indexes(game_t* game_info, int left_to_board);
