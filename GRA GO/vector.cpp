@@ -6,11 +6,12 @@
 typedef struct {
 	int x, y;
 }coordinates;
-//Struktura opisuj¹ca wektor liczb ca³kowitych.
+
+//Struktura opisuj¹ca wektor koordynatów
 //j-ta komórka wektora w (0 <= j < w.count) jest dostêpna jest jako w.ptr[j].
 typedef struct {
-	int allocated_size; // rozmiar zaalokowanego bufora
-	int count;          // liczba elementów w wektorze
+	int allocated_size;			// rozmiar zaalokowanego bufora
+	int count;					// liczba elementów w wektorze
 	coordinates* ptr;           // wskaŸnik do pocz¹tku bufora
 } vector_t;
 
@@ -21,6 +22,7 @@ void init_vector(vector_t* v) {
 	v->allocated_size = 1;
 	v->ptr = (coordinates*)malloc(v->allocated_size * sizeof(coordinates));
 }
+
 
 // Realokacja wektora *v, tak aby bufor mia³ pojemnoœæ reallocate_size.
 void reallocate(vector_t* v, int reallocate_size) {
