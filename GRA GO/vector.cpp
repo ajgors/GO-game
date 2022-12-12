@@ -58,5 +58,3 @@ coordinates pop_back_v(vector_t* v) {
 		reallocate(v, v->allocated_size / 2);
 	return retv;
 }
-
-
